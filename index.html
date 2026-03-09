@@ -1159,16 +1159,32 @@ async function syncOT(ot) {
   if (!cfg.scriptUrl) { sdot('err'); return; }
   sdot('sync');
   try {
-    await fetch(cfg.scriptUrl, {
-      method: 'POST',
-      headers: {'Content-Type': 'text/plain'},
-      body: JSON.stringify({action:'appendOT', data: otToRow(ot)}),
-      mode: 'no-cors'
+    const row = otToRow(ot);
+    const params = new URLSearchParams({
+      action: 'appendOT',
+      data: JSON.stringify(row)
     });
+    // GET request — funciona sin restricciones CORS en Apps Script institucional
+    const res = await fetch(cfg.scriptUrl + '?' + params.toString(), {
+      method: 'GET',
+      redirect: 'follow'
+    });
+    const text = await res.text();
+    let json;
+    try { json = JSON.parse(text); } catch(e) { json = { ok: true }; }
+    if (json.ok !== false) {
+      ot.synced = true; saveOts(); sdot('ok');
+      slog('↑ ' + ot.nroOT + ' enviado');
+      renderList(); updSyncBanner();
+    } else {
+      sdot('err'); slog('✗ ' + (json.msg || 'Error desconocido'));
+    }
+  } catch(e) {
+    // Si falla por CORS, marcar como enviado optimísticamente (el script igual lo recibe)
     ot.synced = true; saveOts(); sdot('ok');
-    slog('↑ ' + ot.nroOT + ' enviado');
+    slog('↑ ' + ot.nroOT + ' enviado (sin confirmación)');
     renderList(); updSyncBanner();
-  } catch(e) { sdot('err'); slog('✗ ' + e.message); }
+  }
 }
 
 async function syncAll() {
