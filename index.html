@@ -1155,29 +1155,28 @@ function otToRow(o) {
           o.estado, o.obs];
 }
 
-function syncOT(ot) {
+async function syncOT(ot) {
   if (!cfg.scriptUrl) { sdot('err'); return; }
   sdot('sync');
-  // Usamos iframe oculto para evitar bloqueo CORS del dominio institucional UNNE
-  // El iframe carga la URL del script como GET — no tiene restricciones de origen
-  const row = otToRow(ot);
-  const params = new URLSearchParams({
-    action: 'appendOT',
-    data: JSON.stringify(row)
-  });
-  const url = cfg.scriptUrl + '?' + params.toString();
-  const iframe = document.createElement('iframe');
-  iframe.style.display = 'none';
-  iframe.src = url;
-  document.body.appendChild(iframe);
-  // Marcar como synced después de 3 segundos (tiempo suficiente para que el script ejecute)
-  setTimeout(() => {
-    ot.synced = true;
-    saveOts(); sdot('ok');
-    slog('↑ ' + ot.nroOT + ' enviado');
-    renderList(); updSyncBanner();
-    document.body.removeChild(iframe);
-  }, 3000);
+  try {
+    const row = otToRow(ot);
+    const params = new URLSearchParams({
+      action: 'appendOT',
+      data: JSON.stringify(row)
+    });
+    const url = cfg.scriptUrl + '?' + params.toString();
+    const res = await fetch(url);
+    const data = await res.json();
+    if (data.ok) {
+      ot.synced = true; saveOts(); sdot('ok');
+      slog('↑ ' + ot.nroOT + ' enviado');
+      renderList(); updSyncBanner();
+    } else {
+      sdot('err'); slog('✗ ' + (data.msg || 'Error'));
+    }
+  } catch(e) {
+    sdot('err'); slog('✗ ' + e.message);
+  }
 }
 
 async function syncAll() {
