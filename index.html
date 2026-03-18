@@ -1,1276 +1,166 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<meta name="theme-color" content="#0d1117">
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="OT UNNE">
-<title>Mantenimiento UNNE — Gestión OT</title>
-
-<!-- PWA Manifest embebido como link inline -->
-<link rel="manifest" href="data:application/manifest+json,%7B%22name%22%3A%22Mantenimiento%20UNNE%22%2C%22short_name%22%3A%22OT%20UNNE%22%2C%22start_url%22%3A%22.%2F%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%230d1117%22%2C%22theme_color%22%3A%22%23e8a020%22%2C%22orientation%22%3A%22portrait-primary%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fsvg%2Bxml%2C%253Csvg%2520xmlns%3D%2527http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%2527%2520viewBox%3D%25270%25200%252096%252096%2527%253E%253Crect%2520width%3D%252796%2527%2520height%3D%252796%2527%2520fill%3D%2527%2523e8a020%2527%2F%253E%253Ctext%2520x%3D%252748%2527%2520y%3D%252762%2527%2520text-anchor%3D%2527middle%2527%2520font-size%3D%252740%2527%253E%25F0%259F%2594%25A7%253C%2Ftext%253E%253C%2Fsvg%253E%22%2C%22sizes%22%3A%2296x96%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%7D%5D%7D">
-
-<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@400;600;700;800&display=swap" rel="stylesheet">
-
-<style>
-/* ═══════════════════════════════════════
-   VARIABLES & RESET
-═══════════════════════════════════════ */
-:root {
-  --bg:       #0d1117;
-  --surf:     #161b22;
-  --surf2:    #1c2128;
-  --bdr:      #30363d;
-  --bdr-hi:   #4a9eff;
-  --acc:      #e8a020;
-  --blue:     #4a9eff;
-  --red:      #d04040;
-  --green:    #3a9e6a;
-  --orange:   #d4820a;
-  --purple:   #8860c0;
-  --txt:      #e6edf3;
-  --txt-mid:  #9198a1;
-  --txt-dim:  #6e7681;
-  --mono: 'Share Tech Mono', monospace;
-  --sans: 'Barlow', sans-serif;
-  --cond: 'Barlow Condensed', sans-serif;
-}
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-html { height: 100%; -webkit-tap-highlight-color: transparent; }
-body { background: var(--bg); color: var(--txt); font-family: var(--sans); min-height: 100%; overflow-x: hidden; -webkit-font-smoothing: antialiased; }
-input, select, textarea, button { font-family: inherit; }
-::-webkit-scrollbar { width: 4px; } ::-webkit-scrollbar-track { background: var(--bg); } ::-webkit-scrollbar-thumb { background: var(--bdr); }
-
-/* ═══════════════════════════════════════
-   HEADER
-═══════════════════════════════════════ */
-.hdr {
-  background: var(--surf);
-  border-bottom: 2px solid var(--acc);
-  height: 54px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 14px;
-  position: sticky;
-  top: 0;
-  z-index: 200;
-  gap: 10px;
-}
-.hdr-brand { display: flex; align-items: center; gap: 10px; }
-.badge-unne {
-  background: var(--acc); color: #000;
-  font-family: var(--cond); font-weight: 800; font-size: 11px; letter-spacing: 1.5px;
-  padding: 3px 8px 3px 6px;
-  clip-path: polygon(0 0, calc(100% - 6px) 0, 100% 50%, calc(100% - 6px) 100%, 0 100%);
-  white-space: nowrap;
-}
-.hdr-title { font-family: var(--cond); font-weight: 700; font-size: 15px; letter-spacing: 2px; text-transform: uppercase; white-space: nowrap; }
-.hdr-title span { color: var(--acc); }
-.hdr-right { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
-.dot { width: 8px; height: 8px; border-radius: 50%; background: var(--txt-dim); flex-shrink: 0; transition: all .3s; }
-.dot.ok { background: var(--green); box-shadow: 0 0 6px var(--green); }
-.dot.err { background: var(--red); }
-.dot.sync { background: var(--acc); animation: blink 1s infinite; }
-.clock { font-family: var(--mono); font-size: 10px; color: var(--txt-dim); white-space: nowrap; }
-
-/* ═══════════════════════════════════════
-   TABS
-═══════════════════════════════════════ */
-.tabs {
-  background: var(--surf); border-bottom: 1px solid var(--bdr);
-  display: flex; padding: 0 12px; gap: 2px;
-  overflow-x: auto; -webkit-overflow-scrolling: touch;
-}
-.tabs::-webkit-scrollbar { display: none; }
-.tab {
-  font-family: var(--cond); font-weight: 700; font-size: 11px; letter-spacing: 1.5px;
-  text-transform: uppercase; padding: 11px 14px; color: var(--txt-dim);
-  cursor: pointer; border: none; background: none; border-bottom: 3px solid transparent;
-  white-space: nowrap; transition: all .15s; flex-shrink: 0;
-}
-.tab:hover { color: var(--txt); }
-.tab.active { color: var(--acc); border-bottom-color: var(--acc); }
-.nbadge {
-  display: inline-block; background: var(--acc); color: #000;
-  font-size: 9px; font-weight: 800; padding: 1px 4px; border-radius: 2px;
-  margin-left: 4px; vertical-align: middle;
-}
-
-/* ═══════════════════════════════════════
-   LAYOUT
-═══════════════════════════════════════ */
-.main { padding: 16px 14px; max-width: 960px; margin: 0 auto; }
-.sec { display: none; } .sec.active { display: block; }
-.sec-hdr { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; flex-wrap: wrap; gap: 8px; }
-.sec-title { font-family: var(--cond); font-weight: 800; font-size: 18px; letter-spacing: 2px; text-transform: uppercase; }
-.sec-title::before { content: '// '; color: var(--acc); font-family: var(--mono); font-size: 12px; }
-
-/* ═══════════════════════════════════════
-   BUTTONS
-═══════════════════════════════════════ */
-.btn { font-family: var(--cond); font-weight: 700; font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; padding: 9px 16px; border: none; cursor: pointer; transition: all .15s; display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
-.btn-acc { background: var(--acc); color: #000; clip-path: polygon(0 0,calc(100% - 8px) 0,100% 50%,calc(100% - 8px) 100%,0 100%); padding-right: 22px; }
-.btn-acc:hover { background: #f0b030; transform: translateX(2px); }
-.btn-sec { background: transparent; color: var(--blue); border: 1px solid var(--blue); }
-.btn-sec:hover { background: var(--blue); color: #fff; }
-.btn-dng { background: transparent; color: var(--red); border: 1px solid var(--red); }
-.btn-dng:hover { background: var(--red); color: #fff; }
-.btn-sm { font-size: 10px; padding: 6px 12px; }
-.btn-xs { font-size: 9px; padding: 3px 8px; }
-
-/* ═══════════════════════════════════════
-   STATS
-═══════════════════════════════════════ */
-.stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 20px; }
-@media(min-width:500px){ .stats { grid-template-columns: repeat(6, 1fr); } }
-.stat { background: var(--surf); border: 1px solid var(--bdr); border-left: 3px solid var(--blue); padding: 12px 10px; }
-.stat.warn { border-left-color: var(--orange); } .stat.ok { border-left-color: var(--green); } .stat.err { border-left-color: var(--red); }
-.stat-lbl { font-family: var(--cond); font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--txt-dim); margin-bottom: 4px; }
-.stat-val { font-family: var(--mono); font-size: 26px; line-height: 1; }
-.stat-sub { font-size: 9px; color: var(--txt-dim); margin-top: 2px; }
-
-/* ═══════════════════════════════════════
-   FILTERS & SEARCH
-═══════════════════════════════════════ */
-.filters { display: flex; gap: 5px; margin-bottom: 12px; flex-wrap: wrap; }
-.fbtn { font-family: var(--cond); font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; padding: 5px 10px; background: transparent; border: 1px solid var(--bdr); color: var(--txt-dim); cursor: pointer; transition: all .15s; }
-.fbtn:hover, .fbtn.active { border-color: var(--blue); color: var(--blue); background: rgba(74,158,255,.08); }
-.search-wrap { display: flex; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; }
-.search { background: var(--surf); border: 1px solid var(--bdr); color: var(--txt); font-size: 13px; padding: 8px 12px 8px 34px; outline: none; transition: border-color .15s; flex: 1; min-width: 160px; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='13' height='13' viewBox='0 0 24 24' fill='none' stroke='%236e7681' stroke-width='2'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.35-4.35'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: 10px center; }
-.search:focus { border-color: var(--blue); }
-
-/* ═══════════════════════════════════════
-   OT CARDS
-═══════════════════════════════════════ */
-.ot-list { display: flex; flex-direction: column; gap: 7px; }
-.ot-card { background: var(--surf); border: 1px solid var(--bdr); border-left: 4px solid var(--bdr); padding: 13px; cursor: pointer; transition: all .15s; position: relative; }
-.ot-card:hover { background: var(--surf2); border-color: var(--bdr-hi); }
-.ot-card.alta { border-left-color: var(--red); } .ot-card.media { border-left-color: var(--orange); } .ot-card.baja { border-left-color: var(--blue); }
-.ot-top { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 5px; gap: 8px; flex-wrap: wrap; }
-.ot-num { font-family: var(--mono); font-size: 11px; color: var(--acc); }
-.badges { display: flex; gap: 4px; flex-wrap: wrap; }
-.badge { font-family: var(--cond); font-size: 9px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; padding: 2px 6px; border-radius: 1px; }
-.b-correctivo { background: #2a1010; color: #e07070; border: 1px solid #501010; }
-.b-preventivo { background: #0a1a2a; color: #70b0e0; border: 1px solid #103060; }
-.b-hs { background: #1a0a2a; color: #b080e0; border: 1px solid #300850; }
-.b-abierta { background: #102030; color: var(--blue); border: 1px solid #205080; }
-.b-en_proceso { background: #2a1a00; color: var(--acc); border: 1px solid #604000; }
-.b-cerrada { background: #0a2010; color: var(--green); border: 1px solid #104020; }
-.b-alta { background: #2a0808; color: var(--red); border: 1px solid #500808; }
-.b-media { background: #2a1500; color: var(--orange); border: 1px solid #603000; }
-.b-baja { background: #081020; color: var(--blue); border: 1px solid #102040; }
-.ot-desc { font-size: 13px; font-weight: 500; margin-bottom: 5px; line-height: 1.3; }
-.ot-meta { font-size: 11px; color: var(--txt-dim); display: flex; gap: 12px; flex-wrap: wrap; }
-.sync-tag { position: absolute; bottom: 8px; right: 10px; font-size: 9px; font-family: var(--mono); color: var(--txt-dim); }
-.sync-tag.pend { color: var(--orange); } .sync-tag.done { color: var(--green); }
-
-/* ═══════════════════════════════════════
-   FORM
-═══════════════════════════════════════ */
-.form-box { background: var(--surf); border: 1px solid var(--bdr); border-top: 3px solid var(--acc); padding: 18px; }
-.fgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-@media(max-width:520px){ .fgrid { grid-template-columns: 1fr; } }
-.full { grid-column: 1 / -1; }
-.field { display: flex; flex-direction: column; gap: 4px; }
-.field label { font-family: var(--cond); font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--txt-dim); }
-.req { color: var(--acc); margin-left: 2px; }
-.field input, .field select, .field textarea { background: var(--bg); border: 1px solid var(--bdr); color: var(--txt); font-size: 13px; padding: 9px 10px; outline: none; transition: border-color .15s; width: 100%; border-radius: 0; -webkit-appearance: none; }
-.field input:focus, .field select:focus, .field textarea:focus { border-color: var(--blue); }
-.field select option { background: var(--surf); }
-.field textarea { resize: vertical; min-height: 68px; }
-.field input[readonly] { color: var(--acc); font-family: var(--mono); background: rgba(232,160,32,.05); cursor: default; }
-.sep { height: 1px; background: var(--bdr); margin: 16px 0; }
-.sep-lbl { font-family: var(--cond); font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--txt-dim); margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
-.sep-lbl::after { content: ''; flex: 1; height: 1px; background: var(--bdr); }
-
-/* ═══════════════════════════════════════
-   FIRMA
-═══════════════════════════════════════ */
-#firma-canvas { background: var(--bg); border: 2px dashed var(--bdr); display: block; width: 100%; max-height: 110px; cursor: crosshair; touch-action: none; }
-#firma-canvas:hover { border-color: var(--blue); }
-
-/* ═══════════════════════════════════════
-   MODAL / DETAIL
-═══════════════════════════════════════ */
-.overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.87); z-index: 400; overflow-y: auto; padding: 12px; }
-.overlay.open { display: flex; align-items: flex-start; justify-content: center; }
-.modal { background: var(--surf); border: 1px solid var(--bdr); border-top: 3px solid var(--acc); width: 100%; max-width: 640px; margin: auto; animation: slideIn .2s ease; }
-@keyframes slideIn { from { transform: translateY(-14px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-.m-hdr { padding: 14px 18px; border-bottom: 1px solid var(--bdr); display: flex; align-items: center; justify-content: space-between; }
-.m-title { font-family: var(--cond); font-weight: 700; font-size: 15px; letter-spacing: 2px; text-transform: uppercase; }
-.m-body { padding: 18px; }
-.m-foot { padding: 12px 18px; border-top: 1px solid var(--bdr); display: flex; justify-content: flex-end; gap: 7px; flex-wrap: wrap; }
-.btn-x { background: none; border: none; color: var(--txt-dim); font-size: 18px; cursor: pointer; padding: 2px 6px; line-height: 1; }
-.btn-x:hover { color: var(--txt); }
-.dgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--bdr); border: 1px solid var(--bdr); margin-bottom: 14px; }
-@media(max-width:460px){ .dgrid { grid-template-columns: 1fr; } }
-.dc { background: var(--surf); padding: 9px 12px; }
-.dc.full { grid-column: 1 / -1; }
-.dk { font-family: var(--cond); font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--txt-dim); margin-bottom: 2px; }
-.dv { font-size: 13px; font-weight: 500; }
-
-/* ═══════════════════════════════════════
-   DASHBOARD CHARTS
-═══════════════════════════════════════ */
-.charts-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
-@media(max-width:520px){ .charts-row { grid-template-columns: 1fr; } }
-.chart-box { background: var(--surf); border: 1px solid var(--bdr); padding: 14px; }
-.chart-lbl { font-family: var(--cond); font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--txt-dim); margin-bottom: 12px; }
-.bar-row { margin-bottom: 9px; }
-.bar-labels { display: flex; justify-content: space-between; font-family: var(--cond); font-size: 10px; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 3px; }
-.bar-track { height: 6px; background: var(--bg); border: 1px solid var(--bdr); }
-.bar-fill { height: 100%; transition: width .6s ease; }
-
-/* ═══════════════════════════════════════
-   CONFIG / GUIDE
-═══════════════════════════════════════ */
-.cfg-box { background: var(--surf); border: 1px solid var(--bdr); padding: 18px; margin-bottom: 14px; }
-.cfg-box.blue { border-top: 3px solid var(--blue); }
-.cfg-box.green { border-top: 3px solid var(--green); }
-.cfg-box.orange { border-top: 3px solid var(--orange); }
-.step { display: flex; gap: 12px; margin-bottom: 16px; align-items: flex-start; }
-.step-num { background: var(--acc); color: #000; font-family: var(--cond); font-weight: 800; font-size: 13px; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-.step-content { flex: 1; }
-.step-title { font-family: var(--cond); font-weight: 700; font-size: 13px; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 4px; color: var(--txt); }
-.step-text { font-size: 12px; color: var(--txt-mid); line-height: 1.6; }
-.step-text a { color: var(--blue); }
-.code-block { background: var(--bg); border: 1px solid var(--bdr); border-left: 3px solid var(--acc); padding: 10px 12px; font-family: var(--mono); font-size: 10px; color: var(--txt-mid); margin-top: 6px; word-break: break-all; line-height: 1.7; position: relative; }
-.copy-btn { position: absolute; top: 6px; right: 6px; font-family: var(--cond); font-size: 9px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; background: var(--bdr); color: var(--txt-dim); border: none; padding: 3px 7px; cursor: pointer; transition: all .15s; }
-.copy-btn:hover { background: var(--acc); color: #000; }
-.alert { background: rgba(232,160,32,.08); border: 1px solid rgba(232,160,32,.3); border-left: 3px solid var(--acc); padding: 10px 12px; font-size: 12px; color: var(--txt-mid); margin-top: 8px; line-height: 1.6; }
-.alert.green { background: rgba(58,158,106,.08); border-color: rgba(58,158,106,.3); border-left-color: var(--green); }
-.alert.red { background: rgba(208,64,64,.08); border-color: rgba(208,64,64,.3); border-left-color: var(--red); }
-
-/* ═══════════════════════════════════════
-   SYNC BANNER
-═══════════════════════════════════════ */
-#sync-banner { display: none; align-items: center; justify-content: space-between; gap: 10px; background: rgba(232,160,32,.08); border: 1px solid rgba(232,160,32,.25); padding: 8px 12px; margin-bottom: 12px; flex-wrap: wrap; }
-#sync-banner span { font-family: var(--cond); font-size: 10px; letter-spacing: 1px; text-transform: uppercase; color: var(--acc); }
-
-/* ═══════════════════════════════════════
-   EMPTY STATE
-═══════════════════════════════════════ */
-.empty { text-align: center; padding: 48px 20px; color: var(--txt-dim); }
-.empty-ico { font-size: 38px; margin-bottom: 10px; opacity: .3; }
-.empty-msg { font-family: var(--cond); font-size: 12px; letter-spacing: 1.5px; text-transform: uppercase; }
-
-/* ═══════════════════════════════════════
-   TOAST
-═══════════════════════════════════════ */
-#toast { position: fixed; bottom: 18px; right: 14px; background: var(--surf); border: 1px solid var(--bdr); border-left: 3px solid var(--green); padding: 11px 16px; font-family: var(--cond); font-size: 11px; letter-spacing: 1px; text-transform: uppercase; color: var(--txt); z-index: 999; transform: translateY(64px); opacity: 0; transition: all .3s; max-width: 280px; pointer-events: none; }
-
-/* ═══════════════════════════════════════
-   SCAN LINE
-═══════════════════════════════════════ */
-.scanline { position: fixed; top: 0; left: 0; right: 0; height: 1px; background: linear-gradient(90deg, transparent, var(--acc), transparent); animation: scan 6s linear infinite; pointer-events: none; opacity: .15; z-index: 1000; }
-@keyframes scan { from { transform: translateY(0); } to { transform: translateY(100vh); } }
-@keyframes blink { 0%,100% { opacity: 1; } 50% { opacity: .3; } }
-
-/* ═══════════════════════════════════════
-   INSTALL BANNER
-═══════════════════════════════════════ */
-#install-banner { display: none; background: rgba(58,158,106,.1); border: 1px solid rgba(58,158,106,.3); border-left: 3px solid var(--green); padding: 10px 14px; margin-bottom: 14px; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
-#install-banner span { font-family: var(--cond); font-size: 10px; letter-spacing: 1px; text-transform: uppercase; color: var(--green); }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SGM PRO 2026</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .loading-overlay { position: fixed; inset: 0; background: rgba(255,255,255,0.95); display: none; justify-content: center; align-items: center; z-index: 3000; flex-direction: column; }
+        .tab-active { border-bottom: 4px solid #1e40af; color: #1e40af; font-weight: bold; background: #f8fafc; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+    </style>
 </head>
-<body>
-<div class="scanline"></div>
+<body class="bg-slate-100 p-2 text-slate-800">
 
-<!-- HEADER -->
-<header class="hdr">
-  <div class="hdr-brand">
-    <div class="badge-unne">UNNE</div>
-    <div class="hdr-title">Mantto <span>Electromec.</span></div>
-  </div>
-  <div class="hdr-right">
-    <div class="dot" id="sdot" title="Sync"></div>
-    <div class="clock" id="clock">--:--</div>
-  </div>
-</header>
-
-<!-- TABS -->
-<nav class="tabs">
-  <button class="tab active" onclick="goTab('ots',this)">OTs <span class="nbadge" id="nb">0</span></button>
-  <button class="tab" onclick="goTab('nueva',this)">+ Nueva OT</button>
-  <button class="tab" onclick="goTab('dash',this)">Dashboard</button>
-  <button class="tab" onclick="goTab('config',this)">⚙ Config</button>
-  <button class="tab" onclick="goTab('guia',this)">📖 Guía</button>
-</nav>
-
-<main class="main">
-
-<!-- ═══════════════════════════════════
-     LISTA OTs
-═══════════════════════════════════ -->
-<section id="sec-ots" class="sec active">
-  <div class="sec-hdr">
-    <div class="sec-title">Órdenes de Trabajo</div>
-  </div>
-
-  <div id="install-banner">
-    <span>📲 Instalar app en este dispositivo</span>
-    <button class="btn btn-sm" style="background:var(--green);color:#fff;font-family:var(--cond);font-size:9px;letter-spacing:1px;border:none;padding:5px 10px;cursor:pointer;" id="install-btn">INSTALAR</button>
-  </div>
-
-  <div id="sync-banner">
-    <span id="sync-msg">⟳ OTs pendientes de sync</span>
-    <button class="btn btn-sm" style="background:var(--acc);color:#000;font-family:var(--cond);font-size:9px;letter-spacing:1px;border:none;padding:5px 10px;cursor:pointer;" onclick="syncAll()">SYNC</button>
-  </div>
-
-  <div class="search-wrap">
-    <input class="search" type="text" placeholder="Buscar OT, equipo, sector..." id="q" oninput="renderList()">
-  </div>
-
-  <div class="filters">
-    <button class="fbtn active" onclick="setF('todas',this)">Todas</button>
-    <button class="fbtn" onclick="setF('abierta',this)">Abiertas</button>
-    <button class="fbtn" onclick="setF('en_proceso',this)">En Proceso</button>
-    <button class="fbtn" onclick="setF('cerrada',this)">Cerradas</button>
-    <button class="fbtn" onclick="setF('correctivo',this)">Correctivo</button>
-    <button class="fbtn" onclick="setF('preventivo',this)">Preventivo</button>
-    <button class="fbtn" onclick="setF('hs',this)">H&amp;S</button>
-  </div>
-
-  <div class="ot-list" id="ot-list"></div>
-</section>
-
-<!-- ═══════════════════════════════════
-     NUEVA OT
-═══════════════════════════════════ -->
-<section id="sec-nueva" class="sec">
-  <div class="sec-hdr"><div class="sec-title">Nueva Orden de Trabajo</div></div>
-  <div class="form-box">
-    <div class="fgrid">
-
-      <div class="field">
-        <label>N° OT <span class="req">*</span></label>
-        <input type="text" id="f-nro" readonly>
-      </div>
-      <div class="field">
-        <label>Fecha Apertura <span class="req">*</span></label>
-        <input type="date" id="f-fecha">
-      </div>
-      <div class="field">
-        <label>Hora Apertura</label>
-        <input type="time" id="f-hora">
-      </div>
-      <div class="field">
-        <label>Tipo <span class="req">*</span></label>
-        <select id="f-tipo">
-          <option value="">— Seleccionar —</option>
-          <option value="correctivo">Correctivo</option>
-          <option value="preventivo">Preventivo</option>
-          <option value="hs">H&amp;S</option>
-        </select>
-      </div>
-      <div class="field">
-        <label>Especialidad</label>
-        <select id="f-esp">
-          <option value="">— Seleccionar —</option>
-          <option>Eléctrico</option>
-          <option>Mecánico</option>
-          <option>Refrigeración / HVAC</option>
-          <option>Herrería / Carpintería</option>
-          <option>Plomería / Sanitaria</option>
-          <option>H&amp;S / Seguridad</option>
-          <option>General</option>
-        </select>
-      </div>
-      <div class="field">
-        <label>Prioridad <span class="req">*</span></label>
-        <select id="f-prio">
-          <option value="">— Seleccionar —</option>
-          <option value="alta">🔴 Alta</option>
-          <option value="media">🟡 Media</option>
-          <option value="baja">🔵 Baja</option>
-        </select>
-      </div>
-      <div class="field">
-        <label>Edificio <span class="req">*</span></label>
-        <select id="f-edif">
-          <option value="">— Seleccionar —</option>
-          <option>Edif. Principal</option>
-          <option>Depto. Geociencias</option>
-          <option>Depto. Hidráulica</option>
-          <option>Lab. Aerodinámica</option>
-          <option>Edificio IEM</option>
-          <option>Lab. Integral</option>
-        </select>
-      </div>
-      <div class="field">
-        <label>Sector / Local <span class="req">*</span></label>
-        <input type="text" id="f-sector" placeholder="Ej: Ala Oeste PB — Lab. Química">
-      </div>
-      <div class="field">
-        <label>Equipo / Activo</label>
-        <input type="text" id="f-equipo" placeholder="Ej: Split Carrier, Tablero TS-06...">
-      </div>
-      <div class="field">
-        <label>N° Inventario</label>
-        <input type="text" id="f-inv" placeholder="Ej: REF-014, TS-06c...">
-      </div>
-      <div class="field full">
-        <label>Descripción / Novedad <span class="req">*</span></label>
-        <textarea id="f-desc" placeholder="Describir la falla, novedad o tarea a realizar..."></textarea>
-      </div>
-      <div class="field">
-        <label>Reportado por</label>
-        <input type="text" id="f-rep" placeholder="Quién reporta">
-      </div>
-      <div class="field">
-        <label>Medio de Reporte</label>
-        <select id="f-medio">
-          <option value="">— Seleccionar —</option>
-          <option>Verbal / Pizarrón</option>
-          <option>Teléfono</option>
-          <option>Correo electrónico</option>
-          <option>Inspección propia</option>
-          <option>Recorrida preventiva</option>
-        </select>
-      </div>
-      <div class="field">
-        <label>Personal Asignado <span class="req">*</span></label>
-        <select id="f-op"></select>
-      </div>
-      <div class="field">
-        <label>Estado inicial</label>
-        <select id="f-est">
-          <option value="abierta">Abierta</option>
-          <option value="en_proceso">En Proceso</option>
-        </select>
-      </div>
-      <div class="field full">
-        <label>Materiales Utilizados</label>
-        <textarea id="f-mat" placeholder="Ej: 2 filtros aire, 1L aceite, 3x fusibles 10A..."></textarea>
-      </div>
-      <div class="field full">
-        <label>Observaciones</label>
-        <textarea id="f-obs" placeholder="EPP utilizado, condiciones de trabajo, notas..."></textarea>
-      </div>
-    </div>
-
-    <div class="sep"></div>
-    <div class="sep-lbl">Firma Operario</div>
-    <div style="position:relative;margin-bottom:10px;">
-      <canvas id="firma-canvas" width="600" height="110"
-        onmousedown="sD(event)" onmousemove="dD(event)" onmouseup="eD()" onmouseleave="eD()"
-        ontouchstart="sT(event)" ontouchmove="dT(event)" ontouchend="eD()">
-      </canvas>
-      <div id="firma-ph" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;">
-        <span style="color:var(--txt-dim);font-family:var(--cond);font-size:11px;letter-spacing:1.5px;text-transform:uppercase;">Firmar aquí</span>
-      </div>
-    </div>
-    <button class="btn btn-sec btn-sm" onclick="clrF()" style="margin-bottom:16px;">Limpiar firma</button>
-
-    <div style="display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;">
-      <button class="btn btn-sec" onclick="resetF()">Limpiar</button>
-      <button class="btn btn-acc" onclick="guardar()">▶ Registrar OT</button>
-    </div>
-  </div>
-</section>
-
-<!-- ═══════════════════════════════════
-     DASHBOARD
-═══════════════════════════════════ -->
-<section id="sec-dash" class="sec">
-  <div class="sec-hdr">
-    <div class="sec-title">Dashboard</div>
-    <button class="btn btn-sec btn-sm" onclick="renderDash()">↺ Actualizar</button>
-  </div>
-  <div class="stats" id="dash-stats"></div>
-  <div class="charts-row">
-    <div class="chart-box"><div class="chart-lbl">OTs por Tipo</div><div id="ct"></div></div>
-    <div class="chart-box"><div class="chart-lbl">OTs por Operario</div><div id="co"></div></div>
-  </div>
-  <div class="chart-box">
-    <div class="chart-lbl">Últimas OTs registradas</div>
-    <div id="cr"></div>
-  </div>
-</section>
-
-<!-- ═══════════════════════════════════
-     CONFIG
-═══════════════════════════════════ -->
-<section id="sec-config" class="sec">
-  <div class="sec-hdr"><div class="sec-title">Configuración</div></div>
-
-  <div class="cfg-box blue">
-    <div class="sep-lbl" style="margin-bottom:14px;">Conexión Google Sheets</div>
-    <div class="field" style="margin-bottom:12px;">
-      <label>URL del Web App (Google Apps Script)</label>
-      <input type="text" id="cfg-url" placeholder="https://script.google.com/macros/s/AKfy.../exec" style="font-family:var(--mono);font-size:10px;">
-    </div>
-    <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;">
-      <button class="btn btn-sec btn-sm" onclick="testConn()">Probar conexión</button>
-      <button class="btn btn-acc btn-sm" onclick="saveCfg()">▶ Guardar</button>
-    </div>
-    <div id="conn-st" style="font-family:var(--mono);font-size:10px;color:var(--txt-dim);"></div>
-    <div class="sep"></div>
-    <div class="sep-lbl" style="margin-bottom:10px;">Sincronización manual</div>
-    <div style="display:flex;gap:8px;flex-wrap:wrap;">
-      <button class="btn btn-sec btn-sm" onclick="syncAll()">↑ Subir pendientes a Sheets</button>
-      <button class="btn btn-sec btn-sm" onclick="pullSheets()">↓ Traer desde Sheets</button>
-    </div>
-    <div id="sync-log" style="margin-top:10px;font-family:var(--mono);font-size:9px;color:var(--txt-dim);line-height:1.9;max-height:120px;overflow-y:auto;"></div>
-  </div>
-
-  <div class="cfg-box">
-    <div class="sep-lbl" style="margin-bottom:14px;">Personal de Planta</div>
-    <div id="op-list" style="display:flex;flex-direction:column;gap:5px;margin-bottom:10px;"></div>
-    <div style="display:flex;gap:8px;">
-      <input type="text" id="op-new" placeholder="Nombre y apellido" style="background:var(--bg);border:1px solid var(--bdr);color:var(--txt);font-size:13px;padding:8px 10px;outline:none;flex:1;">
-      <button class="btn btn-sec btn-sm" onclick="addOp()">+ Agregar</button>
-    </div>
-  </div>
-
-  <div class="cfg-box">
-    <div class="sep-lbl" style="margin-bottom:14px;">Datos</div>
-    <div style="display:flex;gap:8px;flex-wrap:wrap;">
-      <button class="btn btn-sec btn-sm" onclick="exportJSON()">↓ Exportar JSON</button>
-      <button class="btn btn-dng btn-sm" onclick="clearData()">⚠ Borrar todos los datos</button>
-    </div>
-  </div>
-</section>
-
-<!-- ═══════════════════════════════════
-     GUÍA DE INSTALACIÓN
-═══════════════════════════════════ -->
-<section id="sec-guia" class="sec">
-  <div class="sec-hdr"><div class="sec-title">Guía de Instalación</div></div>
-
-  <!-- PARTE 1: GitHub Pages -->
-  <div class="cfg-box blue" style="margin-bottom:14px;">
-    <div style="font-family:var(--cond);font-weight:800;font-size:14px;letter-spacing:2px;text-transform:uppercase;margin-bottom:16px;color:var(--blue);">
-      PARTE 1 — Publicar en GitHub Pages (desde la PC)
-    </div>
-
-    <div class="step">
-      <div class="step-num">1</div>
-      <div class="step-content">
-        <div class="step-title">Crear cuenta en GitHub</div>
-        <div class="step-text">Ir a <a href="https://github.com" target="_blank">github.com</a> → Sign up → completar con email, contraseña y nombre de usuario (ej: <strong>mantto-fi-unne</strong>). Confirmar el email.</div>
-      </div>
-    </div>
-
-    <div class="step">
-      <div class="step-num">2</div>
-      <div class="step-content">
-        <div class="step-title">Crear un repositorio nuevo</div>
-        <div class="step-text">Una vez dentro de GitHub → botón verde <strong>"New"</strong> → completar:<br>
-        • Repository name: <code>ot-mantenimiento</code><br>
-        • Marcar <strong>Public</strong><br>
-        • Tildar ✅ <em>"Add a README file"</em><br>
-        → Clic en <strong>Create repository</strong></div>
-      </div>
-    </div>
-
-    <div class="step">
-      <div class="step-num">3</div>
-      <div class="step-content">
-        <div class="step-title">Subir el archivo index.html</div>
-        <div class="step-text">Dentro del repositorio → clic en <strong>"Add file"</strong> → <strong>"Upload files"</strong> → arrastrar el archivo <code>index.html</code> descargado de esta app → clic en <strong>"Commit changes"</strong>.</div>
-        <div class="alert">⚠ El archivo DEBE llamarse exactamente <strong>index.html</strong> (en minúsculas)</div>
-      </div>
-    </div>
-
-    <div class="step">
-      <div class="step-num">4</div>
-      <div class="step-content">
-        <div class="step-title">Activar GitHub Pages</div>
-        <div class="step-text">En el repositorio → <strong>Settings</strong> (engranaje) → sección <strong>Pages</strong> en el menú izquierdo → Source: <strong>Deploy from a branch</strong> → Branch: <strong>main</strong> → carpeta: <strong>/ (root)</strong> → clic <strong>Save</strong>.<br><br>
-        Esperar 1-2 minutos. La URL de la app será:<br></div>
-        <div class="code-block" id="url-ejemplo">https://TU-USUARIO.github.io/ot-mantenimiento/<button class="copy-btn" onclick="copyText('url-ejemplo')">COPIAR</button></div>
-        <div class="alert green">✓ Esta URL funciona desde cualquier dispositivo con internet. Es gratuita y permanente.</div>
-      </div>
-    </div>
-
-    <div class="step">
-      <div class="step-num">5</div>
-      <div class="step-content">
-        <div class="step-title">Verificar que funciona</div>
-        <div class="step-text">Abrir la URL en el navegador. Deberías ver la app con el header naranja de UNNE. Si ves un error 404, esperar 2 minutos más y recargar.</div>
-      </div>
-    </div>
-  </div>
-
-  <!-- PARTE 2: Instalar en Android -->
-  <div class="cfg-box green" style="margin-bottom:14px;">
-    <div style="font-family:var(--cond);font-weight:800;font-size:14px;letter-spacing:2px;text-transform:uppercase;margin-bottom:16px;color:var(--green);">
-      PARTE 2 — Instalar en la Tablet Android
-    </div>
-
-    <div class="step">
-      <div class="step-num">1</div>
-      <div class="step-content">
-        <div class="step-title">Abrir en Chrome</div>
-        <div class="step-text">En la tablet, abrir <strong>Google Chrome</strong> (no Samsung Internet, no Firefox). Escribir la URL de GitHub Pages en la barra de direcciones.</div>
-        <div class="alert red">⚠ Debe ser Chrome para Android. Otros navegadores no permiten instalar la app.</div>
-      </div>
-    </div>
-
-    <div class="step">
-      <div class="step-num">2</div>
-      <div class="step-content">
-        <div class="step-title">Instalar como app</div>
-        <div class="step-text">Una vez que cargue la app, Chrome mostrará automáticamente un banner en la parte inferior que dice <strong>"Agregar a pantalla de inicio"</strong>. Tocar ese banner.<br><br>
-        Si no aparece el banner: tocar los <strong>3 puntos</strong> (⋮) arriba a la derecha → <strong>"Agregar a pantalla de inicio"</strong> → confirmar.</div>
-      </div>
-    </div>
-
-    <div class="step">
-      <div class="step-num">3</div>
-      <div class="step-content">
-        <div class="step-title">Confirmar instalación</div>
-        <div class="step-text">Aparece un diálogo que pregunta el nombre. Dejarlo como <strong>"Mantenimiento UNNE"</strong> → tocar <strong>Agregar</strong>.<br><br>
-        El ícono 🔧 aparece en la pantalla de inicio de la tablet. Al abrirla, se abre en pantalla completa como una app nativa, sin barras del navegador.</div>
-      </div>
-    </div>
-
-    <div class="step">
-      <div class="step-num">4</div>
-      <div class="step-content">
-        <div class="step-title">Funciona sin internet</div>
-        <div class="step-text">Los datos se guardan localmente en la tablet. Se puede trabajar sin conexión. Cuando haya wifi, ir a <strong>⚙ Config → Subir pendientes a Sheets</strong> para sincronizar con Google Sheets.</div>
-        <div class="alert green">✓ Repetir los pasos 1-3 en la PC del escritorio para tener la app también ahí.</div>
-      </div>
-    </div>
-  </div>
-
-  <!-- PARTE 3: Conectar con Google Sheets -->
-  <div class="cfg-box orange" style="margin-bottom:14px;">
-    <div style="font-family:var(--cond);font-weight:800;font-size:14px;letter-spacing:2px;text-transform:uppercase;margin-bottom:16px;color:var(--orange);">
-      PARTE 3 — Conectar con Google Sheets (opcional pero recomendado)
-    </div>
-
-    <div class="step">
-      <div class="step-num">1</div>
-      <div class="step-content">
-        <div class="step-title">Abrir Gestion_OT_2026 en Sheets</div>
-        <div class="step-text">En Google Drive → abrir el archivo <strong>Gestion_OT_2026</strong>.</div>
-      </div>
-    </div>
-
-    <div class="step">
-      <div class="step-num">2</div>
-      <div class="step-content">
-        <div class="step-title">Abrir Apps Script</div>
-        <div class="step-text">Menú <strong>Extensiones</strong> → <strong>Apps Script</strong>. Se abre una nueva pestaña con el editor.</div>
-      </div>
-    </div>
-
-    <div class="step">
-      <div class="step-num">3</div>
-      <div class="step-content">
-        <div class="step-title">Pegar el código</div>
-        <div class="step-text">En el editor, borrar todo lo que hay y pegar el siguiente código completo:</div>
-        <div class="code-block" id="script-code" style="max-height:200px;overflow-y:auto;">
-// ══════════════════════════════════════════
-// APPS SCRIPT — Mantenimiento UNNE
-// Pegar en Extensions > Apps Script de Gestion_OT_2026
-// ══════════════════════════════════════════
-
-const SPREADSHEET_ID = '1uXPU666muqP3-5X-BuYBbRcy2MSf5u471lvJDcm68n4';
-const SHEET_OT = 'Registro OT';
-const DATA_START = 3;
-
-function doGet(e) {
-  const a = e.parameter.action || '';
-  if (a === 'ping') return res({ ok: true, msg: 'Script activo OK' });
-  if (a === 'getOTs') return getOTs();
-  return res({ ok: false, msg: 'Accion no reconocida' });
-}
-
-function doPost(e) {
-  try {
-    const b = JSON.parse(e.postData.contents);
-    if (b.action === 'appendOT') return appendOT(b.data);
-    if (b.action === 'updateEstado') return updateEstado(b.nroOT, b.estado, b.fecha, b.hora);
-    return res({ ok: false, msg: 'Accion desconocida' });
-  } catch(err) {
-    return res({ ok: false, msg: err.message });
-  }
-}
-
-function appendOT(row) {
-  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
-  const sh = ss.getSheetByName(SHEET_OT);
-  if (!sh) return res({ ok: false, msg: 'Pestaña no encontrada: ' + SHEET_OT });
-  const data = sh.getDataRange().getValues();
-  const nros = data.slice(DATA_START-1).map(r => r[0]).filter(Boolean);
-  if (nros.includes(row[0])) {
-    for (let i = DATA_START-1; i < data.length; i++) {
-      if (data[i][0] === row[0]) {
-        sh.getRange(i+1, 1, 1, row.length).setValues([row]);
-        return res({ ok: true, msg: 'OT actualizada: ' + row[0] });
-      }
-    }
-  }
-  const last = data.slice(DATA_START-1).reduce((acc,r,i) => r[0] ? DATA_START+i : acc, DATA_START-1);
-  sh.getRange(last+1, 1, 1, row.length).setValues([row]);
-  const col = { abierta:'#e8f4fd', en_proceso:'#fef9e7', cerrada:'#eafaf1' };
-  if (col[row[17]]) sh.getRange(last+1,1,1,row.length).setBackground(col[row[17]]);
-  sh.getRange(last+1,1).setFontWeight('bold');
-  return res({ ok: true, msg: 'OT registrada: ' + row[0] });
-}
-
-function updateEstado(nro, estado, fecha, hora) {
-  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
-  const sh = ss.getSheetByName(SHEET_OT);
-  const data = sh.getDataRange().getValues();
-  for (let i = DATA_START-1; i < data.length; i++) {
-    if (data[i][0] === nro) {
-      sh.getRange(i+1,16).setValue(fecha||'');
-      sh.getRange(i+1,17).setValue(hora||'');
-      sh.getRange(i+1,18).setValue(estado);
-      return res({ ok: true, msg: 'Estado actualizado' });
-    }
-  }
-  return res({ ok: false, msg: 'OT no encontrada: ' + nro });
-}
-
-function getOTs() {
-  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
-  const sh = ss.getSheetByName(SHEET_OT);
-  const data = sh.getDataRange().getValues();
-  const ots = data.slice(DATA_START-1).filter(r => r[0]);
-  return res({ ok: true, ots: ots, count: ots.length });
-}
-
-function res(data) {
-  return ContentService.createTextOutput(JSON.stringify(data))
-    .setMimeType(ContentService.MimeType.JSON);
-}
-<button class="copy-btn" onclick="copyText('script-code')">COPIAR</button>
+    <div id="login-screen" class="fixed inset-0 bg-slate-900 flex items-center justify-center z-[2000] p-4">
+        <div class="bg-white p-10 rounded-[45px] shadow-2xl w-full max-w-sm text-center">
+            <h2 class="font-black text-2xl mb-8 text-blue-900">SGM INGENIERÍA</h2>
+            <input type="password" id="pin-input" placeholder="PIN" class="w-full border-2 p-5 rounded-3xl text-center text-4xl mb-6 outline-none">
+            <button onclick="verificarAcceso()" class="w-full bg-blue-600 text-white font-black py-5 rounded-3xl uppercase">Entrar</button>
         </div>
-      </div>
     </div>
 
-    <div class="step">
-      <div class="step-num">4</div>
-      <div class="step-content">
-        <div class="step-title">Guardar y publicar</div>
-        <div class="step-text">
-          1. Guardar con <strong>Ctrl+S</strong><br>
-          2. Clic en <strong>Implementar</strong> (azul, arriba a la derecha) → <strong>Nueva implementación</strong><br>
-          3. Tipo: <strong>Aplicación web</strong><br>
-          4. Ejecutar como: <strong>Yo</strong><br>
-          5. Quién tiene acceso: <strong>Cualquier persona</strong><br>
-          6. Clic en <strong>Implementar</strong><br>
-          7. Autorizar cuando pida permisos<br>
-          8. <strong>Copiar la URL</strong> que aparece (empieza con https://script.google.com...)
+    <div id="loader" class="loading-overlay">
+        <div class="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+        <p class="mt-4 font-black text-blue-900 text-[10px] uppercase">Sincronizando...</p>
+    </div>
+
+    <div id="main-content" class="max-w-4xl mx-auto bg-white rounded-[40px] shadow-xl p-4 hidden mt-2 mb-10 overflow-hidden">
+        
+        <div class="flex border-b mb-6 overflow-x-auto no-scrollbar text-[10px] font-black uppercase whitespace-nowrap sticky top-0 bg-white z-50">
+            <button onclick="tab('nueva')" id="btn-nueva" class="flex-1 py-5 tab-active">Nueva OT</button>
+            <button onclick="tab('pendientes')" id="btn-pendientes" class="flex-1 py-5 text-slate-400">Cerrar OT</button>
+            <button onclick="tab('relev')" id="btn-relev" class="flex-1 py-5 text-blue-600">Relevamiento</button>
+            <button onclick="tab('extintores')" id="btn-extintores" class="flex-1 py-5 text-red-500">Extintores</button>
+            <button onclick="tab('historial')" id="btn-historial" class="flex-1 py-5 text-slate-400">Historial</button>
         </div>
-        <div class="alert">⚠ Guardar esa URL. Es la que va en <strong>⚙ Config → URL del Web App</strong>.</div>
-      </div>
-    </div>
 
-    <div class="step">
-      <div class="step-num">5</div>
-      <div class="step-content">
-        <div class="step-title">Pegar la URL en la app</div>
-        <div class="step-text">Ir a <strong>⚙ Config</strong> en esta app → pegar la URL en el campo → clic <strong>Guardar</strong> → clic <strong>Probar conexión</strong>. Debe aparecer "Script activo OK".</div>
-        <div class="alert green">✓ Desde ese momento, cada OT que se registre se guarda automáticamente en tu planilla de Google Sheets.</div>
-      </div>
-    </div>
-  </div>
-
-  <!-- FAQ -->
-  <div class="cfg-box">
-    <div class="sep-lbl" style="margin-bottom:14px;">Preguntas frecuentes</div>
-    <div style="display:flex;flex-direction:column;gap:10px;">
-      <div><div style="font-family:var(--cond);font-weight:700;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--acc);margin-bottom:3px;">¿Se pierden los datos si no hay internet?</div><div style="font-size:12px;color:var(--txt-mid);">No. Todo se guarda localmente en el dispositivo. Al recuperar conexión, hacer sync manual desde ⚙ Config.</div></div>
-      <div><div style="font-family:var(--cond);font-weight:700;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--acc);margin-bottom:3px;">¿Cómo actualizo la app cuando haya cambios?</div><div style="font-size:12px;color:var(--txt-mid);">Subir el nuevo index.html al repositorio de GitHub (mismo proceso que el paso 3 de la Parte 1). GitHub Pages se actualiza solo en 1-2 minutos.</div></div>
-      <div><div style="font-family:var(--cond);font-weight:700;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--acc);margin-bottom:3px;">¿Funciona en la PC del escritorio también?</div><div style="font-size:12px;color:var(--txt-mid);">Sí. Abrir la URL en Chrome de la PC y hacer el mismo proceso de "Agregar a pantalla de inicio" o instalar como app desde los 3 puntos del navegador.</div></div>
-      <div><div style="font-family:var(--cond);font-weight:700;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--acc);margin-bottom:3px;">¿La app se actualiza en todos los dispositivos al mismo tiempo?</div><div style="font-size:12px;color:var(--txt-mid);">Los datos locales son independientes por dispositivo. Google Sheets actúa como base central: cada dispositivo puede subir (↑) y traer (↓) datos desde Sheets.</div></div>
-      <div><div style="font-family:var(--cond);font-weight:700;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--acc);margin-bottom:3px;">¿Tiene costo?</div><div style="font-size:12px;color:var(--txt-mid);">Cero. GitHub Pages es gratis para repositorios públicos. Google Apps Script es gratis. El único requisito es una cuenta de Google y una cuenta de GitHub.</div></div>
-    </div>
-  </div>
-</section>
-
-</main>
-
-<!-- MODAL DETALLE OT -->
-<div class="overlay" id="det-ov">
-  <div class="modal">
-    <div class="m-hdr">
-      <div class="m-title" id="det-tit">OT</div>
-      <button class="btn-x" onclick="closeDet()">✕</button>
-    </div>
-    <div class="m-body" id="det-body"></div>
-    <div class="m-foot" id="det-foot"></div>
-  </div>
-</div>
-
-<div id="toast"></div>
-
-<!-- ═══════════════════════════════════════════════
-     JAVASCRIPT COMPLETO
-═══════════════════════════════════════════════ -->
-<script>
-// ══════════════════════════════════════
-// STATE
-// ══════════════════════════════════════
-let ots = [];
-let cfg = { scriptUrl: '', operarios: ['García, R.', 'López, M.', 'Torres, F.', 'Ramírez, D.', 'Prof. H&S (ext.)'] };
-let filt = 'todas';
-let drw = false, lx = 0, ly = 0, firma = null;
-let deferredPrompt = null;
-
-function loadState() {
-  try { ots = JSON.parse(localStorage.getItem('ots-unne') || '[]'); } catch(e) { ots = []; }
-  try { cfg = { ...cfg, ...JSON.parse(localStorage.getItem('cfg-unne') || '{}') }; } catch(e) {}
-}
-function saveOts() { localStorage.setItem('ots-unne', JSON.stringify(ots)); updBadge(); }
-function saveCfgStore() { localStorage.setItem('cfg-unne', JSON.stringify(cfg)); }
-
-// ══════════════════════════════════════
-// CLOCK
-// ══════════════════════════════════════
-function tick() {
-  const n = new Date();
-  document.getElementById('clock').textContent =
-    n.toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'}) + ' ' +
-    n.toLocaleDateString('es-AR',{weekday:'short',day:'2-digit',month:'2-digit'}).toUpperCase();
-}
-setInterval(tick, 1000); tick();
-
-// ══════════════════════════════════════
-// PWA INSTALL
-// ══════════════════════════════════════
-window.addEventListener('beforeinstallprompt', e => {
-  e.preventDefault();
-  deferredPrompt = e;
-  const b = document.getElementById('install-banner');
-  b.style.display = 'flex';
-  document.getElementById('install-btn').onclick = async () => {
-    deferredPrompt.prompt();
-    const { outcome } = await deferredPrompt.userChoice;
-    if (outcome === 'accepted') b.style.display = 'none';
-    deferredPrompt = null;
-  };
-});
-
-// ══════════════════════════════════════
-// TABS
-// ══════════════════════════════════════
-function goTab(id, el) {
-  document.querySelectorAll('.sec').forEach(s => s.classList.remove('active'));
-  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-  document.getElementById('sec-' + id).classList.add('active');
-  el.classList.add('active');
-  if (id === 'dash') renderDash();
-  if (id === 'ots') renderList();
-  if (id === 'nueva') initF();
-  if (id === 'config') renderCfg();
-}
-
-// ══════════════════════════════════════
-// BADGE
-// ══════════════════════════════════════
-function updBadge() {
-  document.getElementById('nb').textContent = ots.filter(o => o.estado !== 'cerrada').length;
-}
-
-// ══════════════════════════════════════
-// FORM INIT
-// ══════════════════════════════════════
-function genNro() {
-  const y = new Date().getFullYear();
-  return 'OT-' + y + '-' + String(ots.length + 1).padStart(3, '0');
-}
-
-function initF() {
-  document.getElementById('f-nro').value = genNro();
-  document.getElementById('f-fecha').value = new Date().toISOString().split('T')[0];
-  const _n = new Date(); document.getElementById('f-hora').value = String(_n.getHours()).padStart(2,'0') + ':' + String(_n.getMinutes()).padStart(2,'0');
-  const sel = document.getElementById('f-op');
-  sel.innerHTML = '<option value="">— Seleccionar —</option>' + cfg.operarios.map(o => `<option>${o}</option>`).join('');
-}
-
-// ══════════════════════════════════════
-// FIRMA
-// ══════════════════════════════════════
-const cv = document.getElementById('firma-canvas');
-const cx = cv.getContext('2d');
-cx.strokeStyle = '#c8d0da'; cx.lineWidth = 2.5; cx.lineCap = 'round'; cx.lineJoin = 'round';
-
-function gp(e) { const r = cv.getBoundingClientRect(); return { x:(e.clientX-r.left)*(cv.width/r.width), y:(e.clientY-r.top)*(cv.height/r.height) }; }
-function sD(e) { drw=true; const p=gp(e); lx=p.x; ly=p.y; document.getElementById('firma-ph').style.opacity='0'; }
-function dD(e) { if(!drw)return; const p=gp(e); cx.beginPath(); cx.moveTo(lx,ly); cx.lineTo(p.x,p.y); cx.stroke(); lx=p.x; ly=p.y; firma=cv.toDataURL(); }
-function eD() { drw=false; }
-function sT(e) { e.preventDefault(); const t=e.touches[0]; const r=cv.getBoundingClientRect(); drw=true; lx=(t.clientX-r.left)*(cv.width/r.width); ly=(t.clientY-r.top)*(cv.height/r.height); document.getElementById('firma-ph').style.opacity='0'; }
-function dT(e) { e.preventDefault(); if(!drw)return; const t=e.touches[0]; const r=cv.getBoundingClientRect(); const x=(t.clientX-r.left)*(cv.width/r.width); const y=(t.clientY-r.top)*(cv.height/r.height); cx.beginPath(); cx.moveTo(lx,ly); cx.lineTo(x,y); cx.stroke(); lx=x; ly=y; firma=cv.toDataURL(); }
-function clrF() { cx.clearRect(0,0,cv.width,cv.height); firma=null; document.getElementById('firma-ph').style.opacity='1'; }
-
-// ══════════════════════════════════════
-// GUARDAR OT
-// ══════════════════════════════════════
-function g(id) { return document.getElementById(id).value; }
-
-function guardar() {
-  const nro=g('f-nro'), tipo=g('f-tipo'), prio=g('f-prio'),
-        edif=g('f-edif'), sec=g('f-sector'), desc=g('f-desc').trim(), op=g('f-op');
-  if (!tipo || !prio || !edif || !sec || !desc || !op) {
-    toast('⚠ Completar campos obligatorios', 'err'); return;
-  }
-  const ot = {
-    id: Date.now(), nroOT: nro,
-    fechaApertura: g('f-fecha'), horaApertura: g('f-hora'),
-    tipo, especialidad: g('f-esp'), prioridad: prio,
-    edificio: edif, sector: sec,
-    equipo: g('f-equipo'), inventario: g('f-inv'),
-    reportadoPor: g('f-rep'), medioReporte: g('f-medio'),
-    personalAsignado: op, descripcion: desc,
-    materiales: g('f-mat'), obs: g('f-obs'),
-    estado: g('f-est') || 'abierta',
-    fechaCierre: '', horaCierre: '',
-    firma: firma, creadoEn: new Date().toISOString(), synced: false
-  };
-  ots.unshift(ot);
-  saveOts();
-  toast('✓ ' + nro + ' registrada');
-  resetF();
-  updSyncBanner();
-  if (cfg.scriptUrl) syncOT(ot);
-  setTimeout(() => {
-    document.querySelectorAll('.sec').forEach(s => s.classList.remove('active'));
-    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-    document.getElementById('sec-ots').classList.add('active');
-    document.querySelector('.tab').classList.add('active');
-    renderList();
-  }, 700);
-}
-
-function resetF() {
-  ['f-tipo','f-esp','f-prio','f-edif','f-sector','f-equipo','f-inv','f-rep','f-medio','f-op','f-desc','f-mat','f-obs']
-    .forEach(id => document.getElementById(id).value = '');
-  document.getElementById('f-est').value = 'abierta';
-  clrF(); initF();
-}
-
-// ══════════════════════════════════════
-// LIST
-// ══════════════════════════════════════
-function setF(f, btn) {
-  filt = f;
-  document.querySelectorAll('.fbtn').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  renderList();
-}
-
-function renderList() {
-  const q = document.getElementById('q').value.toLowerCase();
-  const list = ots.filter(o => {
-    const mf = filt === 'todas' || o.estado === filt || o.tipo === filt;
-    const ms = !q || [o.nroOT, o.equipo, o.descripcion, o.personalAsignado, o.sector, o.edificio]
-      .some(f => f && f.toLowerCase().includes(q));
-    return mf && ms;
-  });
-  updBadge();
-  const c = document.getElementById('ot-list');
-  if (!list.length) {
-    c.innerHTML = `<div class="empty"><div class="empty-ico">📋</div><div class="empty-msg">Sin órdenes de trabajo</div></div>`;
-    return;
-  }
-  c.innerHTML = list.map(o => `
-    <div class="ot-card ${o.prioridad}" onclick="openDet(${o.id})">
-      <div class="sync-tag ${o.synced?'done':'pend'}">${o.synced?'✓':'⟳'}</div>
-      <div class="ot-top">
-        <span class="ot-num">${o.nroOT}</span>
-        <div class="badges">
-          <span class="badge b-${o.tipo}">${o.tipo.toUpperCase()}</span>
-          <span class="badge b-${o.estado}">${elbl(o.estado)}</span>
-          <span class="badge b-${o.prioridad}">${o.prioridad.toUpperCase()}</span>
+        <div id="sec-nueva" class="space-y-4">
+            <div class="grid grid-cols-2 gap-2">
+                <select id="n-tipo" class="p-4 bg-slate-50 border rounded-2xl text-xs font-bold"><option>Correctivo</option><option>Preventivo</option><option>Mejora</option></select>
+                <select id="n-rubro" onchange="checkRefrig()" class="p-4 bg-slate-50 border rounded-2xl text-xs font-bold"><option>Electricidad</option><option>General</option><option>Refrigeración</option><option>Herrería</option></select>
+            </div>
+            <select id="n-edif" onchange="loadCascada('n-edif','n-sec','n-ubi','dbU')" class="w-full p-4 border-2 border-blue-100 rounded-2xl text-xs font-black bg-blue-50"></select>
+            <select id="n-sec" onchange="filterUbi('n-sec','n-ubi','dbU')" class="w-full p-4 border rounded-2xl text-xs" disabled><option>Sector...</option></select>
+            <select id="n-ubi" onchange="autoFill()" class="w-full p-4 border rounded-2xl text-xs font-bold" disabled><option>Ubicación...</option></select>
+            <div id="div-refrig" class="hidden grid grid-cols-2 gap-2 bg-blue-50 p-4 rounded-2xl border border-blue-100">
+                <input id="n-inv" placeholder="N° Inv" class="p-3 border rounded-xl bg-white text-xs" readonly>
+                <input id="n-eq" placeholder="Equipo" class="p-3 border rounded-xl bg-white text-xs" readonly>
+            </div>
+            <input id="n-rep" placeholder="Reportó..." class="w-full p-4 border rounded-2xl text-xs bg-slate-50">
+            <select id="n-tec" class="w-full p-4 border-2 border-yellow-200 rounded-2xl text-xs font-black bg-yellow-50"><option value="">Técnico...</option><option>DSF</option><option>AGL</option><option>MAP</option><option>RRG</option></select>
+            <textarea id="n-desc" placeholder="Descripción..." class="w-full p-4 border rounded-2xl bg-slate-50 text-xs" rows="3"></textarea>
+            <button onclick="saveOT()" class="w-full bg-blue-700 text-white p-5 rounded-3xl font-black uppercase">Registrar OT</button>
         </div>
-      </div>
-      <div class="ot-desc">${o.descripcion.substring(0,90)}${o.descripcion.length>90?'...':''}</div>
-      <div class="ot-meta">
-        <span>🏛 ${o.edificio}</span>
-        <span>📍 ${o.sector}</span>
-        ${o.equipo?`<span>⚙ ${o.equipo}</span>`:''}
-        <span>👷 ${o.personalAsignado}</span>
-        <span>📅 ${fd(o.fechaApertura)}</span>
-      </div>
-    </div>`).join('');
-}
 
-// ══════════════════════════════════════
-// DETAIL
-// ══════════════════════════════════════
-function openDet(id) {
-  const o = ots.find(x => x.id === id); if (!o) return;
-  document.getElementById('det-tit').textContent = o.nroOT;
-  document.getElementById('det-body').innerHTML = `
-    <div class="badges" style="margin-bottom:12px;">
-      <span class="badge b-${o.tipo}">${o.tipo.toUpperCase()}</span>
-      <span class="badge b-${o.estado}">${elbl(o.estado)}</span>
-      <span class="badge b-${o.prioridad}">PRIO: ${o.prioridad.toUpperCase()}</span>
-      ${o.especialidad?`<span class="badge" style="background:var(--surf2);color:var(--txt-mid);border:1px solid var(--bdr);">${o.especialidad}</span>`:''}
-      <span class="badge" style="background:${o.synced?'#0a2010':'#2a1500'};color:${o.synced?'var(--green)':'var(--orange)'};border:1px solid ${o.synced?'#104020':'#603000'};">${o.synced?'✓ SYNC':'⟳ LOCAL'}</span>
+        <div id="sec-pendientes" class="hidden space-y-4">
+            <select id="c-lista" class="w-full p-4 border-2 border-green-100 rounded-2xl font-black bg-green-50 text-xs"></select>
+            <div class="p-5 bg-slate-50 rounded-[35px] border-2 border-dashed space-y-3">
+                <select id="m-rub" onchange="loadG()" class="w-full p-3 border rounded-xl bg-white text-xs font-bold"></select>
+                <div class="grid grid-cols-2 gap-2">
+                    <select id="m-gru" onchange="loadI()" class="p-3 border rounded-xl bg-white text-xs" disabled><option>Grupo...</option></select>
+                    <select id="m-ite" class="p-3 border rounded-xl bg-white text-[10px]" disabled><option>Item...</option></select>
+                </div>
+                <div class="flex gap-2">
+                    <input type="number" id="m-cant" value="1" class="w-20 p-3 border-2 border-blue-200 rounded-xl text-center font-black">
+                    <button onclick="addItem()" class="flex-1 bg-slate-800 text-white rounded-xl font-black text-[10px] uppercase">Añadir</button>
+                </div>
+                <div id="cesta" class="space-y-1"></div>
+            </div>
+            <textarea id="c-obs" placeholder="Observaciones cierre..." class="w-full p-4 border rounded-2xl bg-slate-50 text-xs" rows="3"></textarea>
+            <button onclick="cerrarOT()" class="w-full bg-green-600 text-white p-6 rounded-[35px] font-black uppercase">Finalizar Cierre</button>
+        </div>
+
+        <div id="sec-relev" class="hidden"><p class="text-center p-10 font-bold">Módulo Relevamiento Activo</p></div>
+        <div id="sec-extintores" class="hidden"><p class="text-center p-10 font-bold">Módulo Extintores Activo</p></div>
+        <div id="sec-historial" class="hidden"><div id="hist-lista" class="space-y-2"></div></div>
     </div>
-    <div class="dgrid">
-      <div class="dc"><div class="dk">Fecha / Hora Apertura</div><div class="dv">${fd(o.fechaApertura)} ${o.horaApertura||''}</div></div>
-      <div class="dc"><div class="dk">Personal Asignado</div><div class="dv">${o.personalAsignado}</div></div>
-      <div class="dc"><div class="dk">Edificio</div><div class="dv">${o.edificio}</div></div>
-      <div class="dc"><div class="dk">Sector / Local</div><div class="dv">${o.sector}</div></div>
-      ${o.equipo?`<div class="dc"><div class="dk">Equipo / Activo</div><div class="dv">${o.equipo}</div></div>`:''}
-      ${o.inventario?`<div class="dc"><div class="dk">N° Inventario</div><div class="dv">${o.inventario}</div></div>`:''}
-      ${o.reportadoPor?`<div class="dc"><div class="dk">Reportado por</div><div class="dv">${o.reportadoPor}</div></div>`:''}
-      ${o.medioReporte?`<div class="dc"><div class="dk">Medio de reporte</div><div class="dv">${o.medioReporte}</div></div>`:''}
-      <div class="dc full"><div class="dk">Descripción</div><div class="dv">${o.descripcion}</div></div>
-      ${o.materiales?`<div class="dc full"><div class="dk">Materiales utilizados</div><div class="dv">${o.materiales}</div></div>`:''}
-      ${o.obs?`<div class="dc full"><div class="dk">Observaciones</div><div class="dv">${o.obs}</div></div>`:''}
-      ${o.fechaCierre?`<div class="dc full"><div class="dk">Cierre</div><div class="dv">${fd(o.fechaCierre)} ${o.horaCierre||''}</div></div>`:''}
-    </div>
-    ${o.firma?`<div style="margin-bottom:12px;"><div class="dk" style="margin-bottom:5px;">Firma</div><img src="${o.firma}" style="max-width:100%;max-height:90px;background:var(--bg);border:1px solid var(--bdr);display:block;"></div>`:''}
-    <div><div class="dk" style="margin-bottom:7px;">Actualizar Estado</div>
-    <div style="display:flex;gap:5px;flex-wrap:wrap;">
-      <button class="btn btn-sm ${o.estado==='abierta'?'btn-acc':'btn-sec'}" onclick="setEst(${id},'abierta')">Abierta</button>
-      <button class="btn btn-sm ${o.estado==='en_proceso'?'btn-acc':'btn-sec'}" onclick="setEst(${id},'en_proceso')">En Proceso</button>
-      <button class="btn btn-sm ${o.estado==='cerrada'?'btn-acc':'btn-sec'}" onclick="setEst(${id},'cerrada')">Cerrada</button>
-    </div></div>`;
-  document.getElementById('det-foot').innerHTML = `
-    ${!o.synced && cfg.scriptUrl ? `<button class="btn btn-sec btn-sm" onclick="syncOT(ots.find(x=>x.id==${id}));closeDet()">↑ Sync</button>` : ''}
-    <button class="btn btn-dng btn-sm" onclick="delOT(${id})">Eliminar</button>
-    <button class="btn btn-sec" onclick="closeDet()">Cerrar</button>`;
-  document.getElementById('det-ov').classList.add('open');
-}
 
-function closeDet() { document.getElementById('det-ov').classList.remove('open'); }
-document.getElementById('det-ov').addEventListener('click', e => { if (e.target === e.currentTarget) closeDet(); });
+    <script>
+        const URL = "https://script.google.com/macros/s/AKfycbw4vNrwVWJezNj4E8jbACjAfYE0LDLgKVtYE-kcDB6LPx8ElFhBZjGjADexi3aHLorb/exec"; 
+        const PIN_CORRECTO = "4370";
+        let dbU = [], dbM = {}, cesta = [];
 
-function setEst(id, est) {
-  const o = ots.find(x => x.id === id); if (!o) return;
-  o.estado = est; o.synced = false;
-  if (est === 'cerrada') {
-    o.fechaCierre = new Date().toISOString().split('T')[0];
-    o.horaCierre = new Date().toLocaleTimeString('es-AR', {hour:'2-digit', minute:'2-digit'});
-  }
-  saveOts(); openDet(id); renderList();
-  toast('Estado: ' + elbl(est));
-  if (cfg.scriptUrl) syncOT(o);
-}
+        function showL(v) { document.getElementById('loader').style.display = v ? 'flex' : 'none'; }
+        window.onload = () => { if(localStorage.getItem('sgm_session') === PIN_CORRECTO) loginExitoso(); };
+        function verificarAcceso() { if(document.getElementById('pin-input').value === PIN_CORRECTO) { localStorage.setItem('sgm_session', PIN_CORRECTO); loginExitoso(); } else alert("PIN Incorrecto"); }
 
-function delOT(id) {
-  if (!confirm('¿Eliminar esta OT? Esta acción no se puede deshacer.')) return;
-  ots = ots.filter(o => o.id !== id); saveOts(); closeDet(); renderList();
-  toast('OT eliminada', 'err');
-}
-
-// ══════════════════════════════════════
-// DASHBOARD
-// ══════════════════════════════════════
-function renderDash() {
-  const total=ots.length, ab=ots.filter(o=>o.estado==='abierta').length,
-        ep=ots.filter(o=>o.estado==='en_proceso').length, ce=ots.filter(o=>o.estado==='cerrada').length,
-        al=ots.filter(o=>o.prioridad==='alta'&&o.estado!=='cerrada').length,
-        pe=ots.filter(o=>!o.synced).length;
-  document.getElementById('dash-stats').innerHTML = `
-    <div class="stat"><div class="stat-lbl">Total</div><div class="stat-val">${total}</div></div>
-    <div class="stat warn"><div class="stat-lbl">Abiertas</div><div class="stat-val">${ab}</div></div>
-    <div class="stat"><div class="stat-lbl">En proceso</div><div class="stat-val">${ep}</div></div>
-    <div class="stat ok"><div class="stat-lbl">Cerradas</div><div class="stat-val">${ce}</div></div>
-    <div class="stat err"><div class="stat-lbl">Alta prio.</div><div class="stat-val">${al}</div></div>
-    <div class="stat ${pe>0?'warn':'ok'}"><div class="stat-lbl">Sin sync</div><div class="stat-val">${pe}</div></div>`;
-  const tipos = [['correctivo','var(--red)'],['preventivo','var(--blue)'],['hs','var(--purple)']];
-  const tl = {correctivo:'Correctivo',preventivo:'Preventivo',hs:'H&S'};
-  const mt = Math.max(...tipos.map(([t])=>ots.filter(o=>o.tipo===t).length), 1);
-  document.getElementById('ct').innerHTML = tipos.map(([t,c]) => {
-    const n = ots.filter(o=>o.tipo===t).length;
-    return `<div class="bar-row"><div class="bar-labels"><span style="color:var(--txt-mid)">${tl[t]}</span><span style="font-family:var(--mono);color:${c}">${n}</span></div><div class="bar-track"><div class="bar-fill" style="width:${(n/mt)*100}%;background:${c}"></div></div></div>`;
-  }).join('');
-  const ops = [...new Set(ots.map(o=>o.personalAsignado))].filter(Boolean);
-  const mo = Math.max(...ops.map(op=>ots.filter(o=>o.personalAsignado===op).length), 1);
-  document.getElementById('co').innerHTML = ops.length ? ops.map(op => {
-    const n = ots.filter(o=>o.personalAsignado===op).length;
-    return `<div class="bar-row"><div class="bar-labels"><span style="color:var(--txt-mid);font-size:10px;">${op}</span><span style="font-family:var(--mono);color:var(--acc)">${n}</span></div><div class="bar-track"><div class="bar-fill" style="width:${(n/mo)*100}%;background:var(--acc)"></div></div></div>`;
-  }).join('') : '<div style="color:var(--txt-dim);font-size:11px;">Sin datos aún</div>';
-  document.getElementById('cr').innerHTML = ots.slice(0,5).map(o =>
-    `<div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--bdr);cursor:pointer;flex-wrap:wrap;" onclick="openDet(${o.id})">
-      <span style="font-family:var(--mono);font-size:10px;color:var(--acc);min-width:100px;">${o.nroOT}</span>
-      <span class="badge b-${o.tipo}">${o.tipo.toUpperCase()}</span>
-      <span style="flex:1;font-size:11px;color:var(--txt-mid);">${o.descripcion.substring(0,50)}...</span>
-      <span class="badge b-${o.estado}">${elbl(o.estado)}</span>
-    </div>`
-  ).join('') || '<div style="color:var(--txt-dim);font-family:var(--cond);font-size:11px;letter-spacing:1px;">SIN REGISTROS AÚN</div>';
-}
-
-// ══════════════════════════════════════
-// CONFIG
-// ══════════════════════════════════════
-function renderCfg() {
-  document.getElementById('cfg-url').value = cfg.scriptUrl || '';
-  renderOps();
-}
-function renderOps() {
-  document.getElementById('op-list').innerHTML = cfg.operarios.map((op,i) =>
-    `<div style="display:flex;align-items:center;justify-content:space-between;padding:6px 10px;background:var(--bg);border:1px solid var(--bdr);">
-      <span style="font-size:13px;">${op}</span>
-      <button class="btn btn-xs btn-dng" onclick="delOp(${i})">✕</button>
-    </div>`).join('');
-}
-function addOp() {
-  const v = document.getElementById('op-new').value.trim();
-  if (!v) return;
-  cfg.operarios.push(v);
-  document.getElementById('op-new').value = '';
-  saveCfgStore(); renderOps();
-  toast('Operario agregado');
-}
-function delOp(i) { cfg.operarios.splice(i,1); saveCfgStore(); renderOps(); }
-function saveCfg() {
-  cfg.scriptUrl = document.getElementById('cfg-url').value.trim();
-  saveCfgStore(); toast('✓ Configuración guardada');
-  updSyncBanner();
-}
-function exportJSON() {
-  const blob = new Blob([JSON.stringify(ots, null, 2)], {type:'application/json'});
-  const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
-  a.download = 'ots-unne-' + new Date().toISOString().split('T')[0] + '.json';
-  a.click();
-}
-function clearData() {
-  if (!confirm('¿Borrar TODOS los datos locales? Esta acción no se puede deshacer.')) return;
-  ots = []; saveOts(); renderList();
-  toast('Datos borrados', 'err');
-}
-
-// ══════════════════════════════════════
-// SYNC CON GOOGLE SHEETS
-// ══════════════════════════════════════
-function sdot(s) { document.getElementById('sdot').className = 'dot ' + s; }
-function slog(m) {
-  const el = document.getElementById('sync-log'); if (!el) return;
-  const t = new Date().toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
-  el.textContent = '['+t+'] '+m+'\n'+el.textContent;
-}
-
-function otToRow(o) {
-  return [o.nroOT, o.fechaApertura, o.horaApertura, o.tipo, o.especialidad, o.prioridad,
-          o.edificio, o.sector, o.equipo, o.inventario, o.reportadoPor, o.medioReporte,
-          o.personalAsignado, o.descripcion, o.materiales, o.fechaCierre, o.horaCierre,
-          o.estado, o.obs];
-}
-
-async function syncOT(ot) {
-  if (!cfg.scriptUrl) { sdot('err'); return; }
-  sdot('sync');
-  try {
-    const row = otToRow(ot);
-    const params = new URLSearchParams({
-      action: 'appendOT',
-      data: JSON.stringify(row)
-    });
-    const url = cfg.scriptUrl + '?' + params.toString();
-    const res = await fetch(url);
-    const data = await res.json();
-    if (data.ok) {
-      ot.synced = true; saveOts(); sdot('ok');
-      slog('↑ ' + ot.nroOT + ' enviado');
-      renderList(); updSyncBanner();
-    } else {
-      sdot('err'); slog('✗ ' + (data.msg || 'Error'));
-    }
-  } catch(e) {
-    sdot('err'); slog('✗ ' + e.message);
-  }
-}
-
-async function syncAll() {
-  const pend = ots.filter(o => !o.synced);
-  if (!pend.length) { toast('No hay OTs pendientes'); return; }
-  if (!cfg.scriptUrl) { toast('Configurar URL del script primero', 'err'); return; }
-  for (const o of pend) await syncOT(o);
-  toast('✓ ' + pend.length + ' OTs sincronizadas');
-}
-
-async function pullSheets() {
-  if (!cfg.scriptUrl) { toast('Configurar URL del script primero', 'err'); return; }
-  sdot('sync'); slog('↓ Consultando Sheets...');
-  try {
-    const res = await fetch(cfg.scriptUrl + '?action=getOTs');
-    const data = await res.json();
-    if (data.ok && data.ots) {
-      let added = 0;
-      data.ots.forEach(row => {
-        if (row[0] && !ots.find(o => o.nroOT === row[0])) {
-          ots.push({ id: Date.now()+Math.random(), nroOT:row[0], fechaApertura:row[1], horaApertura:row[2],
-            tipo:row[3]||'correctivo', especialidad:row[4], prioridad:row[5]||'media',
-            edificio:row[6], sector:row[7], equipo:row[8], inventario:row[9],
-            reportadoPor:row[10], medioReporte:row[11], personalAsignado:row[12],
-            descripcion:row[13], materiales:row[14], fechaCierre:row[15], horaCierre:row[16],
-            estado:row[17]||'abierta', obs:row[18], firma:null,
-            creadoEn:new Date().toISOString(), synced:true });
-          added++;
+        function loginExitoso() {
+            document.getElementById('login-screen').classList.add('hidden');
+            document.getElementById('main-content').classList.remove('hidden');
+            init();
         }
-      });
-      if (added) { ots.sort((a,b) => b.id-a.id); saveOts(); renderList(); }
-      sdot('ok'); slog('↓ ' + added + ' OTs importadas');
-      toast('↓ ' + added + ' OTs importadas');
-    }
-  } catch(e) { sdot('err'); slog('✗ ' + e.message); }
-}
 
-async function testConn() {
-  const url = document.getElementById('cfg-url').value.trim();
-  const st = document.getElementById('conn-st');
-  if (!url) { st.textContent = '✗ Ingresar URL primero'; return; }
-  st.textContent = '⟳ Probando...'; st.style.color = 'var(--txt-dim)';
-  try {
-    const res = await fetch(url + '?action=ping');
-    const data = await res.json();
-    st.textContent = data.ok ? '✓ ' + data.msg : '✗ ' + data.msg;
-    st.style.color = data.ok ? 'var(--green)' : 'var(--red)';
-  } catch(e) {
-    st.textContent = '⚠ No se pudo verificar (CORS). Si el script está bien publicado, igual funcionará.';
-    st.style.color = 'var(--orange)';
-  }
-}
+        async function init() {
+            showL(true);
+            try {
+                const eds = await fetch(`${URL}?action=getEdificios&token=${PIN_CORRECTO}`).then(r=>r.json());
+                document.getElementById('n-edif').innerHTML = '<option value="">Edificio...</option>' + eds.map(e=>`<option value="${e}">${e}</option>`).join("");
+                dbM = await fetch(`${URL}?action=getMateriales&token=${PIN_CORRECTO}`).then(r=>r.json());
+                document.getElementById('m-rub').innerHTML = '<option value="">1. Rubro (Hoja)</option>' + Object.keys(dbM).map(x=>`<option value="${x}">${x}</option>`).join("");
+            } catch(e) { console.error(e); }
+            showL(false);
+        }
 
-// ══════════════════════════════════════
-// SYNC BANNER
-// ══════════════════════════════════════
-function updSyncBanner() {
-  const pend = ots.filter(o => !o.synced).length;
-  const b = document.getElementById('sync-banner');
-  if (pend > 0 && cfg.scriptUrl) {
-    b.style.display = 'flex';
-    document.getElementById('sync-msg').textContent = '⟳ ' + pend + ' OT' + (pend>1?'s':'') + ' pendiente' + (pend>1?'s':'') + ' de sync';
-  } else { b.style.display = 'none'; }
-}
+        function tab(t) {
+            ['nueva','pendientes','relev','extintores','historial'].forEach(s => {
+                document.getElementById('sec-'+s).classList.toggle('hidden', s!==t);
+                document.getElementById('btn-'+s).classList.toggle('tab-active', s===t);
+            });
+            if(t==='pendientes') loadAbiertas();
+        }
 
-// ══════════════════════════════════════
-// HELPERS
-// ══════════════════════════════════════
-function elbl(e) { return {abierta:'ABIERTA', en_proceso:'EN PROCESO', cerrada:'CERRADA'}[e] || e.toUpperCase(); }
-function fd(d) { if (!d) return '—'; const [y,m,dd] = d.split('-'); return dd+'/'+m+'/'+y; }
+        async function loadAbiertas() {
+            showL(true);
+            const d = await fetch(`${URL}?action=getAbiertas&token=${PIN_CORRECTO}`).then(r=>r.json());
+            document.getElementById('c-lista').innerHTML = d.map(o=>`<option value="${o.id}">${o.detalle}</option>`).join("");
+            showL(false);
+        }
 
-function toast(msg, type='ok') {
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.style.borderLeftColor = type==='err' ? 'var(--red)' : 'var(--green)';
-  t.style.transform = 'translateY(0)'; t.style.opacity = '1';
-  setTimeout(() => { t.style.transform = 'translateY(64px)'; t.style.opacity = '0'; }, 2800);
-}
+        function loadG() {
+            const r = document.getElementById('m-rub').value;
+            document.getElementById('m-gru').innerHTML = '<option value="">2. Grupo...</option>' + Object.keys(dbM[r]).map(x=>`<option value="${x}">${x}</option>`).join("");
+            document.getElementById('m-gru').disabled = false;
+        }
 
-function copyText(id) {
-  const el = document.getElementById(id);
-  const text = el.innerText.replace('COPIAR','').trim();
-  navigator.clipboard.writeText(text).then(() => toast('✓ Copiado al portapapeles'));
-}
+        function loadI() {
+            const r = document.getElementById('m-rub').value, g = document.getElementById('m-gru').value;
+            document.getElementById('m-ite').innerHTML = '<option value="">3. Item...</option>' + dbM[r][g].map(x=>`<option value='${JSON.stringify(x)}'>${x.nombre} (Stock: ${x.stock})</option>`).join("");
+            document.getElementById('m-ite').disabled = false;
+        }
 
-// ══════════════════════════════════════
-// INIT
-// ══════════════════════════════════════
-loadState();
-renderList();
-updBadge();
-updSyncBanner();
-initF();
-sdot(ots.filter(o=>!o.synced).length > 0 ? 'err' : (cfg.scriptUrl ? 'ok' : 'err'));
-</script>
+        function addItem() {
+            const it = JSON.parse(document.getElementById('m-ite').value);
+            cesta.push({nombre: it.nombre, cantidad: document.getElementById('m-cant').value, hoja: it.hoja});
+            document.getElementById('cesta').innerHTML = cesta.map((x,i)=>`<div class="flex justify-between bg-blue-600 text-white p-2 rounded-xl text-[9px] mb-1"><span>${x.cantidad} x ${x.nombre}</span><button onclick="cesta.splice(${i},1);renderCesta()">X</button></div>`).join("");
+        }
+
+        async function cerrarOT() {
+            const idOT = document.getElementById('c-lista').value; if(!idOT) return alert("Elija OT");
+            showL(true);
+            const data = { action: 'cerrarOT', token: PIN_CORRECTO, idOT: idOT, materialesUsados: cesta.map(x=>`${x.cantidad} ${x.nombre}`).join(", "), listaParaDescontar: cesta, comentarioFinal: document.getElementById('c-obs').value };
+            const res = await fetch(URL, { method: 'POST', body: JSON.stringify(data) });
+            const txt = await res.text();
+            if(txt === "Ok") { alert("CERRADA CORRECTAMENTE"); location.reload(); } else { alert(txt); showL(false); }
+        }
+
+        // Funciones auxiliares Nueva OT
+        async function loadCascada(edId, secId, ubiId, dbName) {
+            const ed = document.getElementById(edId).value; showL(true);
+            const r = await fetch(`${URL}?action=getSectores&edificio=${encodeURIComponent(ed)}&token=${PIN_CORRECTO}`).then(r=>r.json());
+            dbU = r;
+            document.getElementById(secId).innerHTML = '<option value="">Sector...</option>' + [...new Set(r.map(x=>x.sector))].map(s=>`<option value="${s}">${s}</option>`).join("");
+            document.getElementById(secId).disabled = false; showL(false);
+        }
+        function filterUbi(secId, ubiId) {
+            const s = document.getElementById(secId).value;
+            document.getElementById(ubiId).innerHTML = '<option value="">Ubi...</option>' + dbU.filter(x=>x.sector===s).map(x=>`<option value='${JSON.stringify(x)}'>${x.ubi}</option>`).join("");
+            document.getElementById(ubiId).disabled = false;
+        }
+        function autoFill() { const d = JSON.parse(document.getElementById('n-ubi').value); document.getElementById('n-inv').value = d.inv_aire || "N/A"; document.getElementById('n-eq').value = d.eq_aire || "N/A"; }
+        function checkRefrig() { document.getElementById('div-refrig').classList.toggle('hidden', document.getElementById('n-rubro').value !== "Refrigeración"); }
+        async function saveOT() { showL(true); const u = JSON.parse(document.getElementById('n-ubi').value); const p = { action: 'nuevaOT', token: PIN_CORRECTO, tipo: document.getElementById('n-tipo').value, especialidad: document.getElementById('n-rubro').value, edificio: document.getElementById('n-edif').value, sector: u.sector, ubicacion: u.ubi, nInventario: document.getElementById('n-inv').value, equipo: document.getElementById('n-eq').value, reportadoPor: document.getElementById('n-rep').value, personal: document.getElementById('n-tec').value, descripcion: document.getElementById('n-desc').value }; await fetch(URL, {method:'POST', body: JSON.stringify(p)}); alert("OT CREADA"); location.reload(); }
+    </script>
 </body>
 </html>
